@@ -686,13 +686,13 @@ def __reader():
                 try:
                         # Block till there are bytes to read
                         # self.pipe is a method for releasing the block on shutdown
-                        #print "__READER SELECT. THERE ARE", self.__serialport.inWaiting(), "PENDING BYTES"
+                        #print("__READER SELECT. THERE ARE", __serialport.inWaiting(), "PENDING BYTES")
                         ready, _, _ = select.select([__pipe[0], __serialport], [], [])
 
                         # Read the packet
-                        #print "__READER READ PACKET"
+                        #print("__READER READ PACKET")
                         p = Packet.from_serial(__serialport)
-                        #print "Received packet:", p
+                        #print("Received packet:", p)
 
                         # Check the response according to several types
                         if p.header == VISCA_BCAST_HEADER:
