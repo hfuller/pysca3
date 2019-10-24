@@ -853,12 +853,12 @@ def init_addresses(first=DEFAULT_SET_ADDR_OFFSET):
                 except (TypeError,ValueError):
                         # TODO User logger
                         # Ignore the exception and set the default value
-                        print "WARNING: Ignore invalid first address value in 'init_addresses': {}".format(first)
+                        print("WARNING: Ignore invalid first address value in 'init_addresses': {}".format(first))
                         __init_addresses_offset = DEFAULT_SET_ADDR_OFFSET
 
                 if __init_addresses_rcvd:
                         # TODO User logger
-                        print "WARNING: The flag 'address set received' was already set when an 'address set' command was issued"
+                        print("WARNING: The flag 'address set received' was already set when an 'address set' command was issued")
                         __init_addresses_rcvd = False
 
                 # Flush the pending commands
