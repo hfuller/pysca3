@@ -311,20 +311,16 @@ class Packet(bytes):
                 if packet is None:
                         packet = ""
 
-                # Initialize this
-                super(Packet, self).__init__(packet)
+                super(Packet, self).__init__()
 
                 if len(self) < VISCA_MIN_PKG_LEN or \
                    len(self) > VISCA_MAX_PKG_LEN:
                         raise ValueError("Incorrect packet size for '{0}': {1}".format(self, len(self)))
 
-                if ord(self[-1]) != VISCA_TERMINATOR:
+                if self[-1] != VISCA_TERMINATOR:
                         raise ValueError("Incorrect terminator byte")
 
                 # TODO: Check packet syntax???
-
-        def __str__(self):
-                return self.encode('hex')
 
         @classmethod
         def from_serial(cls, port):
@@ -352,7 +348,7 @@ class Packet(bytes):
                         packet = packet + new_byte
 
                         # Check whether we received a terminator
-                        if ord(new_byte) == VISCA_TERMINATOR:
+                        if new_byte == bytes([VISCA_TERMINATOR]):
                                 break
 
                 # The error handling (packet size, packet terminator, etc.) is done on the constructor
@@ -383,10 +379,11 @@ class Packet(bytes):
                         except TypeError:
                                 # 'part' is not iterable
                                 p = [ part ]
+                                p = bytes(p)
 
                         payload = payload + serial.to_bytes(p)
 
-                if payload and ord(payload[-1]) == VISCA_TERMINATOR:
+                if payload and payload[-1] == VISCA_TERMINATOR:
                         payload = payload[:-1]
 
                 return cls(Packet.header_for(sender, recipient) + payload + serial.to_bytes([VISCA_TERMINATOR]))
@@ -466,7 +463,7 @@ class Packet(bytes):
 
         @property
         def header(self):
-                return ord(self[VISCA_HEADER_INDEX])
+                return self[VISCA_HEADER_INDEX]
 
         @property
         def payload(self):
@@ -485,20 +482,20 @@ class Packet(bytes):
 
         @property
         def type(self):
-                return ord(self[VISCA_TYPE_INDEX]) & H_NIBBLE_MASK
+                return self[VISCA_TYPE_INDEX] & H_NIBBLE_MASK
 
         @property
         def socket(self):
-                return ord(self[VISCA_TYPE_INDEX]) & L_NIBBLE_MASK
+                return self[VISCA_TYPE_INDEX] & L_NIBBLE_MASK
 
         @property
         def subtype(self):
-                return ord(self[VISCA_TYPE_INDEX]) & L_NIBBLE_MASK
+                return self[VISCA_TYPE_INDEX] & L_NIBBLE_MASK
 
         @property
         def category(self):
-                if ord(self[VISCA_CATEGORY_INDEX]) != VISCA_TERMINATOR:
-                        return ord(self[VISCA_CATEGORY_INDEX])
+                if self[VISCA_CATEGORY_INDEX] != VISCA_TERMINATOR:
+                        return self[VISCA_CATEGORY_INDEX]
                 else:
                         return None
 
@@ -700,7 +697,7 @@ def __reader():
                         # Check the response according to several types
                         if p.header == VISCA_BCAST_HEADER:
                                 __bcast_queue.put(p)
-                        elif ord(p[1]) == VISCA_ADDR_CHANGE:
+                        elif p[1] == VISCA_ADDR_CHANGE:
                                 #print "__READER: Received network change packet!!!"
                                 # Read responses in a new thread
                                 threading.Thread(target=cmd_address_set()).start()
@@ -740,9 +737,9 @@ def __bcast_reader():
                                 __if_clear_rcvd = True
                                 __if_clear_lock.notify()
 
-                elif ord(packet[1]) == VISCA_ADDR_SET:
+                elif packet[1] == VISCA_ADDR_SET:
                         with __init_addresses_lock:
-                                new_addr = ord(packet[2]) - __init_addresses_offset
+                                new_addr = packet[2] - __init_addresses_offset
                                 if new_addr not in __devices:
                                         __devices[new_addr] = Device(new_addr, __write_to_serial, timeout=__timeout)
                                 else:
