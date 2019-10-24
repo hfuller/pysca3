@@ -865,7 +865,8 @@ def init_addresses(first=DEFAULT_SET_ADDR_OFFSET):
                 __clear_all()
 
                 # Send the address set request
-                __write_to_serial(Packet.from_parts(0, VISCA_BCAST_ADDR, VISCA_ADDR, first))
+                pkt = Packet.from_parts(0, VISCA_BCAST_ADDR, VISCA_ADDR, first)
+                __write_to_serial(pkt)
 
                 # Delete the existing devices
                 __devices = {}
