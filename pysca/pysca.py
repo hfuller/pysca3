@@ -22,7 +22,10 @@ import sys
 import os
 import select
 import threading
-import Queue
+try:
+        import queue
+except ImportError:
+        import Queue as queue
 
 
 # Timeout for read and write, in seconds
@@ -51,7 +54,7 @@ VISCA_BCAST_HEADER=0x88
 VISCA_ADDR_MASK=0b0111
 VISCA_SENDER_MASK=0b1000
 VISCA_SENDER_MASK=0x80
-VISCA_VALID_ADDRS=range(0, VISCA_MAX_DEVICES+1)
+VISCA_VALID_ADDRS=list(range(0, VISCA_MAX_DEVICES+1))
 
 VISCA_HEADER_INDEX=0
 VISCA_TYPE_INDEX=1
@@ -337,7 +340,7 @@ class Packet(bytes):
                 # Empty 'bytes' instance
                 packet=serial.to_bytes([])
 
-                for count in xrange(VISCA_MAX_PKG_LEN):
+                for count in range(VISCA_MAX_PKG_LEN):
                         # Read a new byte
                         new_byte = port.read(1)
 
@@ -548,7 +551,7 @@ class Socket(object):
                 with self.__cond:
                         if self.__waiting > 0:
                                 if self.__status == Socket.READY:
-                                        print "WARNING: Clearing socket {} found {} threads waiting but status was READY".format(self.__number, self.__waiting)
+                                        print("WARNING: Clearing socket {} found {} threads waiting but status was READY".format(self.__number, self.__waiting))
 
                         # Awake all the waiting threads. After they all fail, return to READY state
                         self.__status = Socket.CLEARING
@@ -670,7 +673,7 @@ __init_addresses_offset = 1
 __if_clear_lock = threading.Condition()
 __if_clear_rcvd = False
 
-__bcast_queue = Queue.Queue()
+__bcast_queue = queue.Queue()
 
 # TODO: Is this needed?
 # self._allow_write = threading.Event()
@@ -711,12 +714,12 @@ def __reader():
                 except KeyError:
                         # TODO: Do not raise exception, or handle gracefully
                         # TODO: Use logger
-                        print "WARN: Received packet from an unregistered sender {}: {}".format(p.sender, p)
+                        print("WARN: Received packet from an unregistered sender {}: {}".format(p.sender, p))
                         #raise ViscaNoSuchDeviceError("Received packet from an unregistered sender {}: {}".format(p.sender, p))
                 except ValueError as e:
                         # TODO: Do not raise exception, or handle gracefully
                         # TODO: Use logger
-                        print "WARN: Received an incorrect packet: {}".format(e)
+                        print("WARN: Received an incorrect packet: {}".format(e))
                         #raise ValueError("Received an incorrect packet", e)
 
 
@@ -745,13 +748,13 @@ def __bcast_reader():
                                 else:
                                         # TODO: Use logger
                                         # TODO: Any other measures?
-                                        print "WARNING: Received 'SET_ADDR' package for existing device {}".format(new_addr)
+                                        print("WARNING: Received 'SET_ADDR' package for existing device {}".format(new_addr))
                                 # Signal the reception
                                 __init_addresses_rcvd = True
                                 __init_addresses_lock.notify()
                 else:
                         # TODO: Use logger
-                        print "WARNING: Broadcast reader received unknown packet: {}".format(packet)
+                        print("WARNING: Broadcast reader received unknown packet: {}".format(packet))
 
                 # Signal the task is done
                 __bcast_queue.task_done()
@@ -764,11 +767,11 @@ def __write_to_serial(packet):
                         __serialport.write(packet)
                 except serial.SerialTimeoutException as e:
                         # TODO User logger
-                        print "ERROR: Timeout received when writing to the serial port"
+                        print("ERROR: Timeout received when writing to the serial port")
                         raise ViscaTimeoutError(e)
                 except serial.portNotOpenError as e:
                         # TODO User logger
-                        print "ERROR: Port is not open when writing"
+                        print("ERROR: Port is not open when writing")
                         # TODO: Gracefully signal all threads to stop
                         raise ViscaError(e)
 
@@ -907,7 +910,7 @@ def clear_all():
                 # Check if the flag is true --it shouldn't
                 if __if_clear_rcvd:
                         # TODO Use logger
-                        print "WARNING: The flag 'if_clear received' was already set when an 'if_clear' command was issued"
+                        print("WARNING: The flag 'if_clear received' was already set when an 'if_clear' command was issued")
                         __if_clear_rcvd = False
 
                 # Send command
@@ -1313,7 +1316,7 @@ def reset_memory(device, position, blocking=False):
         """
         position = int(position)
 
-        if position not in range(MAX_MEMORY_POSITIONS):
+        if position not in list(range(MAX_MEMORY_POSITIONS)):
                 raise ValueError("Invalid memory position: {}".format(position))
 
         __cmd_cam(device, VISCA_MEMORY, VISCA_MEMORY_RESET, position, blocking=blocking)
@@ -1327,7 +1330,7 @@ def set_memory(device, position, blocking=False):
         """
         position = int(position)
 
-        if position not in range(MAX_MEMORY_POSITIONS):
+        if position not in list(range(MAX_MEMORY_POSITIONS)):
                 raise ValueError("Invalid memory position: {}".format(position))
 
         __cmd_cam(device, VISCA_MEMORY, VISCA_MEMORY_SET, position, blocking=blocking)
@@ -1342,7 +1345,7 @@ def recall_memory(device, position, blocking=False):
         """
         position = int(position)
 
-        if position not in range(MAX_MEMORY_POSITIONS):
+        if position not in list(range(MAX_MEMORY_POSITIONS)):
                 raise ValueError("Invalid memory position: {}".format(position))
 
         __cmd_cam(device, VISCA_MEMORY, VISCA_MEMORY_RECALL, position, blocking=blocking)
